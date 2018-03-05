@@ -1,0 +1,10 @@
+[Unit]
+Description=Reloading Jekyll service
+
+[Service]
+Type=forking
+ExecStart=/usr/local/bin/jekylld-start.sh
+ExecStop=/usr/local/bin/jekylld-stop.sh
+
+[Install]
+WantedBy=multi-user.target
