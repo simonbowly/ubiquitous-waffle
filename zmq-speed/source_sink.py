@@ -28,8 +28,9 @@ def main(count, source_port, sink_port):
             assert sink.recv() == message
 
     messages = [str(i).encode() for i in range(count)]
+    click.echo(f'Testing with {count} messages.')
     run(messages)
-    click.echo(f'Running with {count} messages.')
+    click.echo(f'Timing with {count} messages.')
     IPython.get_ipython().run_line_magic('timeit', '-n 10 run(messages)')
 
 if __name__ == '__main__':
