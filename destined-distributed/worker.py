@@ -24,8 +24,7 @@ def get_latest_waiting(socket, default=None):
 def run_task(message):
     task_def = message.decode()
     logging.info(f'Running task: {task_def}')
-    time.sleep(1)
-    result = random.randint(0, 1000)
+    result = [sum(random.random() for _ in range(3000000)) for _ in range(3)]
     return msgpack.packb({'task': task_def, 'result': result})
 
 
