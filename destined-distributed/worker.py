@@ -1,8 +1,6 @@
 
 import logging
 import random
-import time
-import sys
 
 import click
 import msgpack
@@ -57,24 +55,30 @@ def worker(sub_work_address, push_result_address, control_address, log_file):
     control.setsockopt(zmq.SUBSCRIBE, b'')
     control.connect(f'tcp://{control_address}')
 
-    current_message = None
+    poller = zmq.Poller()
+    poller.register(sub_work, zmq.POLLIN)
+    poller.register(control, zmq.POLLIN)
+
+    # Can't do anything until at least one task or control message is received.
+    current_message = b'idle'
+    logging.info('Waiting for first task')
+    poller.poll()
 
     while True:
-        # Check for tasks.
-        current_message = get_latest_waiting(sub_work, default=current_message)
         # Check for control messages.
         control_message = get_latest_waiting(control)
         if control_message:
             logging.info(f'control: {control_message}')
             if control_message == b'shutdown':
                 break
-        # Do the work.
-        if current_message is None:
-            logging.info('no work to do')
-            # Use this as a sleep command which will
-            # break if a control message is received.
-            control.poll(timeout=1000)
+        # Check for tasks.
+        current_message = get_latest_waiting(sub_work, default=current_message)
+        if current_message == b'idle':
+            # Block until control or task messages received.
+            logging.info('idle - no work to do')
+            poller.poll()
         else:
+            # Do the work.
             result = run_task(current_message)
             push_result.send(result)
 
