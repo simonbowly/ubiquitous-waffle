@@ -1,3 +1,5 @@
+''' Worker process: listen for published task definitions, push
+results to sink, continue until termination signal is published. '''
 
 import logging
 import random
@@ -5,6 +7,8 @@ import random
 import click
 import msgpack
 import zmq
+
+from evaluate import generate_with_system_seeds
 
 
 def get_latest_waiting(socket, default=None):
@@ -20,10 +24,16 @@ def get_latest_waiting(socket, default=None):
 
 
 def run_task(message):
-    task_def = message.decode()
-    logging.info(f'Running task: {task_def}')
-    result = [sum(random.random() for _ in range(3000000)) for _ in range(3)]
-    return msgpack.packb({'task': task_def, 'result': result})
+    assert message != b'idle'
+    # Expect a list of destined specifications. Choose one at random.
+    decoded = msgpack.unpackb(message, raw=False)
+    assert isinstance(decoded, list)
+    specification = random.choice(decoded)
+    logging.info('Running task.')
+    results = list(generate_with_system_seeds(specification, 100))
+    return msgpack.packb(
+        {'specification': specification, 'results': results},
+        use_bin_type=True)
 
 
 @click.command()
