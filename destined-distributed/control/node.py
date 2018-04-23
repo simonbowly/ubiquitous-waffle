@@ -2,6 +2,7 @@
 import contextlib
 from datetime import datetime, timedelta
 import logging
+import socket
 import subprocess
 
 import click
@@ -11,7 +12,6 @@ import protocol
 
 
 @click.command()
-@click.argument('node-name')
 @click.argument('nworkers', type=int)
 @click.option(
     '--controller-address', default='localhost:6001',
@@ -25,13 +25,14 @@ import protocol
 @click.option(
     '--sink-address', default='localhost:6010',
     help='Configure workers: push results.')
-def node(node_name, nworkers, controller_address, worker_port,
+def node(nworkers, controller_address, worker_port,
          tasks_address, sink_address):
     ''' Launch a node controlling :nworkers worker processes. The node sends
     status heartbeats to the controller and listens for a shutdown message. '''
 
     logging.basicConfig(level=logging.INFO)
     heartbeat_ms = 1000
+    node_name = socket.gethostname()
 
     context = zmq.Context()
     # DEALER-ROUTER for sending status and receiving commands.
