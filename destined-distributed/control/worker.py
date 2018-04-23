@@ -23,13 +23,13 @@ def get_latest_waiting(socket, default=None):
 
 @click.command()
 @click.option(
-    '--tasks-address', default='tcp://localhost:6002',
+    '--tasks-address', default='localhost:6002',
     help='Subscribe for task definitions.')
 @click.option(
-    '--shutdown-address', default='tcp://localhost:6003',
+    '--shutdown-address', default='localhost:6003',
     help='Listen for shutdown signal.')
 @click.option(
-    '--sink-address', default='tcp://localhost:6010',
+    '--sink-address', default='localhost:6010',
     help='Push results.')
 @click.option('--log-file', default=None)
 def worker(tasks_address, shutdown_address, sink_address, log_file):
@@ -45,16 +45,16 @@ def worker(tasks_address, shutdown_address, sink_address, log_file):
     # PUB-SUB connection to receive latest task definitions.
     tasks = context.socket(zmq.SUB)
     tasks.setsockopt(zmq.SUBSCRIBE, b'')
-    tasks.connect(tasks_address)
+    tasks.connect(f'tcp://{tasks_address}')
     # PUB-SUB connection to receive a shutdown signal.
     shutdown = context.socket(zmq.SUB)
     shutdown.setsockopt(zmq.SUBSCRIBE, b'')
-    shutdown.connect(shutdown_address)
+    shutdown.connect(f'tcp://{shutdown_address}')
     # PUSH-PULL channel to send results of completed tasks. Linger is set on
     # this socket; if the worker is shut down, undelivered results will be
     # discarded after this time expires.
     sink = context.socket(zmq.PUSH)
-    sink.connect(sink_address)
+    sink.connect(f'tcp://{sink_address}')
     sink.setsockopt(zmq.LINGER, 10000)
     # Poller used when worker is waiting for a task definition.
     poller = zmq.Poller()

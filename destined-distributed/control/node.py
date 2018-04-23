@@ -14,16 +14,16 @@ import protocol
 @click.argument('node-name')
 @click.argument('nworkers', type=int)
 @click.option(
-    '--controller-address', default='tcp://localhost:6001',
+    '--controller-address', default='localhost:6001',
     help='Send heartbeats to controller and receive shutdown commands.')
 @click.option(
     '--worker-port', type=int, default=6003,
     help='Publish shutdown signal to workers on localhost.')
 @click.option(
-    '--tasks-address', default='tcp://localhost:6002',
+    '--tasks-address', default='localhost:6002',
     help='Configure workers: subscribe for task definitions.')
 @click.option(
-    '--sink-address', default='tcp://localhost:6010',
+    '--sink-address', default='localhost:6010',
     help='Configure workers: push results.')
 def node(node_name, nworkers, controller_address, worker_port,
          tasks_address, sink_address):
@@ -31,17 +31,16 @@ def node(node_name, nworkers, controller_address, worker_port,
     status heartbeats to the controller and listens for a shutdown message. '''
 
     logging.basicConfig(level=logging.INFO)
-    worker_address = f'tcp://*:{worker_port}'
     heartbeat_ms = 1000
 
     context = zmq.Context()
     # DEALER-ROUTER for sending status and receiving commands.
     controller = context.socket(zmq.DEALER)
-    controller.connect(controller_address)
+    controller.connect(f'tcp://{controller_address}')
     controller.setsockopt(zmq.LINGER, 0)
     # PUB-SUB to send shutdown signal to workers.
     worker_shutdown = context.socket(zmq.PUB)
-    worker_shutdown.bind(worker_address)
+    worker_shutdown.bind(f'tcp://*:{worker_port}')
 
     # Launch the managed worker processes.
     workers = []
@@ -50,7 +49,7 @@ def node(node_name, nworkers, controller_address, worker_port,
             'python', 'worker.py',
             f'--tasks-address={tasks_address}',
             f'--sink-address={sink_address}',
-            f'--shutdown-address=tcp://localhost:{worker_port}',
+            f'--shutdown-address=localhost:{worker_port}',
             f'--log-file=/tmp/worker{worker_id + 1}.log']
         worker = subprocess.Popen(command)
         workers.append(worker)

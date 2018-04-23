@@ -45,7 +45,6 @@ def msg_node_state(node_name, node_state, workers):
                 'up': worker.returncode is None,
                 'returncode': worker.returncode}
             for worker in workers],
-        'cpu_freq': psutil.cpu_freq().current,
         'cpu_percent': psutil.cpu_percent(),
         'mem_percent': psutil.virtual_memory().percent
         })
