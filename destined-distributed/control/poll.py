@@ -3,8 +3,10 @@
 from pprint import pprint
 import time
 
-import msgpack
 import zmq
+
+import protocol
+
 
 context = zmq.Context()
 
@@ -14,8 +16,7 @@ socket = context.socket(zmq.REQ)
 socket.connect(controller_address)
 
 while True:
-    request = msgpack.packb({'command': 'state'}, use_bin_type=True)
-    socket.send(request)
+    socket.send(protocol.msg_request_state())
     response = socket.recv()
-    pprint(msgpack.unpackb(response, raw=False))
+    pprint(protocol.decode(response))
     time.sleep(1)

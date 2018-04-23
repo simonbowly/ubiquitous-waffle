@@ -1,32 +1,31 @@
 ''' Query system state, send control signals. '''
 
-from pprint import pprint
-
 import IPython
-import msgpack
 import zmq
+
+import protocol
 
 context = zmq.Context()
 
 controller_address = 'tcp://localhost:6000'
 
-def state():
-    request = msgpack.packb({'command': 'state'}, use_bin_type=True)
+def client_send_recv(request):
     socket = context.socket(zmq.REQ)
     socket.connect(controller_address)
     socket.send(request)
-    message = socket.recv()
+    response = socket.recv()
     socket.close()
-    return msgpack.unpackb(message, raw=False)
+    return response
+
+def state():
+    request = protocol.msg_request_state()
+    response = client_send_recv(request)
+    return protocol.decode(response)
 
 def shutdown(node):
-    request = msgpack.packb({'command': 'shutdown', 'node': node}, use_bin_type=True)
-    socket = context.socket(zmq.REQ)
-    socket.connect(controller_address)
-    socket.send(request)
-    message = socket.recv()
-    socket.close()
-    return message
+    request = protocol.msg_request_shutdown(node)
+    response = client_send_recv(request)
+    return response
 
 print('''
 state()         -> Print the system state.
