@@ -27,8 +27,11 @@ import protocol
 @click.option(
     '--sink-address', default='localhost:6010',
     help='Configure workers: push results.')
+@click.option(
+    '--shutdown/--no-shutdown', default=False,
+    help='Shutdown the system after completion.')
 def node(nworkers, controller_address, worker_port,
-         tasks_address, sink_address):
+         tasks_address, sink_address, shutdown):
     ''' Launch a node controlling :nworkers worker processes. The node sends
     status heartbeats to the controller and listens for a shutdown message. '''
 
@@ -99,6 +102,11 @@ def node(nworkers, controller_address, worker_port,
                 logging.info('All workers down')
                 break
             # TODO sigterm/sigkill after a certain amount of time.
+
+    # On normal exit, shutdown the machine.
+    if shutdown:
+        logging.info('Shutting down the system')
+        os.system('shutdown')
 
 
 if __name__ == '__main__':

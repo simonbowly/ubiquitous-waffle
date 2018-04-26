@@ -68,11 +68,17 @@ def controller(client_port, node_port, worker_port, debug):
         socks = dict(poller.poll(timeout=publish_ms))
         now = datetime.now()
         # Discard any node states that haven't been heard from in a while.
-        tracked_nodes = {
+        new_tracked_nodes = {
             ident: state
             for ident, state in tracked_nodes.items()
             if (now - node_heartbeats[ident]) < timedelta(seconds=3)
         }
+        lost_nodes = [
+            tracked_nodes[ident]['name']
+            for ident in set(tracked_nodes) - set(new_tracked_nodes)]
+        if lost_nodes:
+            logging.info('Dropped nodes: ' + str(lost_nodes))
+        tracked_nodes = new_tracked_nodes
         # Respond immediately if there was a client request.
         if client in socks:
             ident, mid, request = client.recv_multipart()
@@ -101,10 +107,14 @@ def controller(client_port, node_port, worker_port, debug):
             ident, mid, message = node.recv_multipart()
             assert mid == b''
             try:
+                is_new = ident not in tracked_nodes
                 tracked_nodes[ident] = protocol.decode_node_heartbeat(message)
                 node_heartbeats[ident] = now
                 node_name = tracked_nodes[ident]['name']
-                logging.debug(f'Received heartbeat from {node_name}')
+                if is_new:
+                    logging.info(f'Registered new node: {node_name}')
+                else:
+                    logging.debug(f'Received heartbeat from {node_name}')
             except ValueError as e:
                 logging.warning(str(e))
         # Re-publish the task definition if period has expired.
