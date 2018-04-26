@@ -77,10 +77,10 @@ def worker(tasks_address, shutdown_address, sink_address, log_file):
         # until another message is received. Otherwise, process the task
         # definition and pass on the result.
         if current_task == b'0':
-            logging.info('Waiting for work')
+            logging.debug('Waiting for work')
             poller.poll()
         else:
-            logging.info('Running task')
+            logging.debug('Running task')
             result_message = protocol.process_task_message(current_task)
             sink.send(result_message)
 

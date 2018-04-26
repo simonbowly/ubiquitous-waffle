@@ -2,8 +2,10 @@
 import contextlib
 from datetime import datetime, timedelta
 import logging
+import os
 import socket
 import subprocess
+import sys
 
 import click
 import zmq
@@ -47,7 +49,8 @@ def node(nworkers, controller_address, worker_port,
     workers = []
     for worker_id in range(nworkers):
         command = [
-            'python', 'worker.py',
+            sys.executable,
+            os.path.join(os.path.dirname(__file__), 'worker.py'),
             f'--tasks-address={tasks_address}',
             f'--sink-address={sink_address}',
             f'--shutdown-address=localhost:{worker_port}',
@@ -77,7 +80,7 @@ def node(nworkers, controller_address, worker_port,
             message = protocol.msg_node_state(node_name, state, workers)
             controller.send_multipart([b'', message])
             last_heartbeat = now
-            logging.info(f'Sent heartbeat to {controller_address}')
+            logging.debug(f'Sent heartbeat to {controller_address}')
         # Check to see if we get any commands back. This also functions
         # as the heartbeat sleep command (only blocking call in loop).
         waiting = controller.poll(timeout=heartbeat_ms)

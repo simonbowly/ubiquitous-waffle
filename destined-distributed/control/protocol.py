@@ -72,7 +72,7 @@ def msg_task_def():
 
 def process_task_message(message):
     ''' Decode the current task definition message, carry out a task and
-    return the encoded result message. '''
+    return the encoded result message to be sent to the result sink. '''
     task_defs = decode(message)
     task_def = random.choice(task_defs)
     result = random.uniform(2, 5)
@@ -81,3 +81,33 @@ def process_task_message(message):
         'task': task_def,
         'result': result
         })
+
+
+def decode_client_request(message):
+    try:
+        request = decode(message)
+    except ValueError as e:
+        raise ValueError('Client request not decodable: ' + str(e))
+    if type(request) is not dict:
+        raise ValueError('Client request is not key-value')
+    if 'command' not in request:
+        raise ValueError('No command in client request message.')
+    if request['command'] == 'state':
+        return 'state', None
+    if request['command'] == 'shutdown':
+        if 'node' not in request:
+            raise ValueError('Client shutdown request does not specify a node.')
+        return 'shutdown', request
+    raise ValueError('Client request sent unknown command: {command}'.format(**request))
+
+
+def decode_node_heartbeat(message):
+    try:
+        heartbeat = decode(message)
+    except ValueError as e:
+        raise ValueError('Node heartbeat not decodable: ' + str(e))
+    if type(heartbeat) is not dict:
+        raise ValueError('Node heartbeat is not key-value')
+    if 'name' not in heartbeat:
+        raise ValueError('Node heartbeat does not contain name key')
+    return heartbeat

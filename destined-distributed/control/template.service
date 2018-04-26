@@ -1,0 +1,9 @@
+[Unit]
+Description=Destined Distribute
+
+[Service]
+ExecStart={python_bin} {install_dir}/node.py --controller-address {central_ip}:6001 --tasks-address {central_ip}:6002 --sink-address {central_ip}:6010 {nworkers}
+Type=simple
+
+[Install]
+WantedBy=multi-user.target
