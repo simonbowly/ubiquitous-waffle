@@ -1,6 +1,7 @@
 ''' Manage nodes, publish tasks to workers, listen for user requests. '''
 
 from datetime import datetime, timedelta
+import json
 import logging
 
 import click
@@ -10,6 +11,7 @@ import protocol
 
 
 @click.command()
+@click.argument('tasks-file', type=click.File('r'))
 @click.option(
     '--client-port', type=int, default=6000,
     help='Accept client requests for state information and commands.')
@@ -20,7 +22,7 @@ import protocol
     '--worker-port', type=int, default=6002,
     help='Publish task list for workers.')
 @click.option('--debug/--no-debug', default=False)
-def controller(client_port, node_port, worker_port, debug):
+def controller(tasks_file, client_port, node_port, worker_port, debug):
     ''' Launch a controller process which publishes task definitions, keeps
     track of node states and allows clients to connect to request state and
     send commands. '''
@@ -55,7 +57,7 @@ def controller(client_port, node_port, worker_port, debug):
     # Last time the task list was published.
     last_publish = datetime.now()
     # Current task list being sent out.
-    task_def_message = protocol.msg_task_def()
+    task_def_message = protocol.encode(json.load(tasks_file))
 
     logging.info(f'Accepting client connections on {client_address}')
     logging.info(f'Registering nodes on {node_address}')

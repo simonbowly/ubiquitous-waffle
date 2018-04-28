@@ -23,6 +23,8 @@ import time
 import msgpack
 import psutil
 
+from tasks import process_task_message
+
 
 encode = functools.partial(msgpack.packb, use_bin_type=True)
 decode = functools.partial(msgpack.unpackb, raw=False)
@@ -64,23 +66,6 @@ def msg_controller_state(tracked_nodes):
     ''' Full system state from controller. :tracked_nodes is just a list
     of node state messages. '''
     return encode({'nodes': tracked_nodes})
-
-
-def msg_task_def():
-    return encode([1, 2, 3])
-
-
-def process_task_message(message):
-    ''' Decode the current task definition message, carry out a task and
-    return the encoded result message to be sent to the result sink. '''
-    task_defs = decode(message)
-    task_def = random.choice(task_defs)
-    result = random.uniform(2, 5)
-    time.sleep(result)
-    return encode({
-        'task': task_def,
-        'result': result
-        })
 
 
 def decode_client_request(message):

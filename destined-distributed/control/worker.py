@@ -32,14 +32,16 @@ def get_latest_waiting(socket, default=None):
     '--sink-address', default='localhost:6010',
     help='Push results.')
 @click.option('--log-file', default=None)
-def worker(tasks_address, shutdown_address, sink_address, log_file):
+@click.option('--debug/--no-debug', default=False)
+def worker(tasks_address, shutdown_address, sink_address, log_file, debug):
     ''' Launch a worker process which completes tasks and pushes the results
     until signalled to shutdown. '''
 
+    level = logging.DEBUG if debug else logging.INFO
     if log_file:
-        logging.basicConfig(filename=log_file, level=logging.INFO)
+        logging.basicConfig(filename=log_file, level=level)
     else:
-        logging.basicConfig(level=logging.INFO)
+        logging.basicConfig(level=level)
 
     context = zmq.Context()
     # PUB-SUB connection to receive latest task definitions.
